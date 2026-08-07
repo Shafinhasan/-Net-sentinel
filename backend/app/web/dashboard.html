@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NetSentinel</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; }
+    body { margin: 0; background: #090f1b; color: #e8eef8; }
+    main { width: min(1050px, 92%); margin: 48px auto; }
+    header { display: flex; justify-content: space-between; gap: 20px; align-items: center; }
+    h1 { margin-bottom: 6px; }
+    .muted { color: #99a8bc; }
+    .badge { padding: 8px 12px; border: 1px solid #33445c; border-radius: 999px; }
+    .actions { display: flex; gap: 10px; margin: 24px 0; flex-wrap: wrap; }
+    button, a { background: #17243a; color: #e8eef8; border: 1px solid #33445c;
+      border-radius: 8px; padding: 10px 14px; text-decoration: none; cursor: pointer; }
+    button:hover, a:hover { background: #21324e; }
+    .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .card { background: #101a2b; border: 1px solid #22324b; border-radius: 12px; padding: 18px; }
+    .value { font-size: 30px; font-weight: 700; margin-top: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 22px; background: #101a2b; }
+    th, td { padding: 12px; border-bottom: 1px solid #22324b; text-align: left; font-size: 14px; }
+    th { color: #99a8bc; }
+    .high { color: #ff8585; } .medium { color: #ffd27a; } .low { color: #83e0a0; }
+    .empty { padding: 28px; text-align: center; color: #99a8bc; }
+    @media (max-width: 760px) {
+      header { display: block; } .summary { grid-template-columns: 1fr; }
+      table { display: block; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>NetSentinel</h1>
+      <div class="muted">Network Intrusion Detection & Incident Response Lab</div>
+    </div>
+    <div class="badge" id="status">Checking API…</div>
+  </header>
+
+  <div class="actions">
+    <button onclick="loadAlerts()">Refresh alerts</button>
+    <a href="/docs">Open API docs</a>
+    <a href="/api/v1/alerts">Raw alert JSON</a>
+  </div>
+
+  <section class="summary">
+    <div class="card"><div class="muted">Total alerts</div><div class="value" id="total">0</div></div>
+    <div class="card"><div class="muted">High severity</div><div class="value" id="high">0</div></div>
+    <div class="card"><div class="muted">EVE source</div><div class="value" id="source">—</div></div>
+  </section>
+
+  <table>
+    <thead>
+      <tr><th>Time</th><th>Severity</th><th>Signature</th><th>Source</th><th>Destination</th></tr>
+    </thead>
+    <tbody id="rows">
+      <tr><td colspan="5" class="empty">Loading…</td></tr>
+    </tbody>
+  </table>
+</main>
+
+<script>
+  const esc = (value) => String(value ?? "—")
+    .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+
+  async function loadAlerts() {
+    const status = document.getElementById("status");
+    try {
+      const health = await fetch("/health").then(r => r.json());
+      status.textContent = health.eve_file_exists ? "API online · EVE ready" : "API online · run analysis";
+      const data = await fetch("/api/v1/alerts?limit=100").then(r => r.json());
+      document.getElementById("total").textContent = data.count;
+      document.getElementById("high").textContent =
+        data.items.filter(x => x.severity_label === "high").length;
+      document.getElementById("source").textContent = data.source_exists ? "Ready" : "Missing";
+
+      const rows = document.getElementById("rows");
+      if (!data.items.length) {
+        rows.innerHTML = '<tr><td colspan="5" class="empty">No alerts yet. Run the safe PCAP analysis command.</td></tr>';
+        return;
+      }
+      rows.innerHTML = data.items.map(alert => `
+        <tr>
+          <td>${esc(alert.timestamp)}</td>
+          <td class="${esc(alert.severity_label)}">${esc(alert.severity_label)}</td>
+          <td>${esc(alert.signature)}</td>
+          <td>${esc(alert.src_ip)}:${esc(alert.src_port)}</td>
+          <td>${esc(alert.dest_ip)}:${esc(alert.dest_port)}</td>
+        </tr>`).join("");
+    } catch (error) {
+      status.textContent = "API unavailable";
+      document.getElementById("rows").innerHTML =
+        '<tr><td colspan="5" class="empty">Could not contact the API.</td></tr>';
+    }
+  }
+  loadAlerts();
+</script>
+</body>
+</html>

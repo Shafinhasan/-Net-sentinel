@@ -1,0 +1,58 @@
+name: netsentinel
+
+services:
+  api:
+    build:
+      context: ./backend
+    container_name: netsentinel-api
+    environment:
+      APP_NAME: ${APP_NAME:-NetSentinel API}
+      APP_VERSION: ${APP_VERSION:-0.1.0}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      EVE_FILE: /data/logs/eve.json
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./data/logs:/data/logs:ro
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  suricata:
+    image: jasonish/suricata:8.0.6
+    container_name: netsentinel-suricata
+    profiles: ["tools"]
+    network_mode: "none"
+    command:
+      - "-c"
+      - "/etc/suricata/suricata.yaml"
+      - "-r"
+      - "/pcap/sample.pcap"
+      - "-S"
+      - "/rules/local.rules"
+      - "-l"
+      - "/var/log/suricata"
+      - "-k"
+      - "none"
+      - "--runmode"
+      - "single"
+    volumes:
+      - ./data/pcap:/pcap:ro
+      - ./data/logs:/var/log/suricata
+      - ./rules:/rules:ro
+    security_opt:
+      - no-new-privileges:true

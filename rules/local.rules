@@ -1,0 +1,3 @@
+# NetSentinel Part 1 safe laboratory rule.
+# It detects only the harmless URI inside data/pcap/sample.pcap.
+alert http any any -> any any (msg:"NETSENTINEL Safe Test HTTP Request"; flow:to_server; http.uri; content:"/netsentinel-test"; classtype:misc-activity; sid:1000001; rev:1;)

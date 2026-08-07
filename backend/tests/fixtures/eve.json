@@ -1,0 +1,4 @@
+{"timestamp":"2026-08-07T10:00:00.000000+1000","flow_id":123456,"event_type":"alert","src_ip":"192.168.56.10","src_port":49152,"dest_ip":"192.168.56.20","dest_port":80,"proto":"TCP","app_proto":"http","alert":{"action":"allowed","gid":1,"signature_id":1000001,"rev":1,"signature":"NETSENTINEL Safe Test HTTP Request","category":"Misc activity","severity":3},"http":{"hostname":"lab.local","url":"/netsentinel-test"}}
+{"timestamp":"2026-08-07T10:01:00.000000+1000","event_type":"dns","src_ip":"192.168.56.10","dest_ip":"192.168.56.20"}
+not-valid-json
+{"timestamp":"2026-08-07T10:02:00.000000+1000","flow_id":999,"event_type":"alert","src_ip":"10.0.0.5","src_port":55555,"dest_ip":"10.0.0.10","dest_port":22,"proto":"TCP","alert":{"action":"allowed","signature_id":2000001,"signature":"Fixture High Severity Alert","category":"Attempted Administrator Privilege Gain","severity":1}}
